@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Chatbot</title>
+  <style>
+    /* Your CSS styles here */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Chatbot</h1>
+    <div class="chatbox" id="chatbox"></div>
+    <div class="input-group">
+      <input id="message-input" type="text" placeholder="Type your message here...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    <button onclick="loadHistory()">Load Chat History</button>
+    <div id="history" class="history"></div>
+  </div>
+  
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("message-input");
+      const message = input.value.trim();
+      if (!message) return;
+      
+      addMessage("User", message);
+      input.value = "";
+      
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        addMessage("Bot", data.reply);
+      } catch (error) {
+        console.error("Error:", error);
+        addMessage("Bot", "Sorry, something went wrong!");
+      }
+    }
+
+    function addMessage(sender, message) {
+      const chatbox = document.getElementById("chatbox");
+      const messageElement = document.createElement("div");
+      messageElement.classList.add("message", sender.toLowerCase());
+      messageElement.textContent = `${sender}: ${message}`;
+      chatbox.appendChild(messageElement);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+    
+    async function loadHistory() {
+      try {
+        const response = await fetch("/chat_history");
+        const historyData = await response.json();
+        
+        const historyDiv = document.getElementById("history");
+        historyDiv.innerHTML = "<h3>Chat History</h3>";
+        
+        historyData.forEach(entry => {
+          const p = document.createElement("p");
+          p.textContent = `[${entry.id}] User: ${entry.user_input} | Bot: ${entry.reply}`;
+          historyDiv.appendChild(p);
+        });
+      } catch (error) {
+        console.error("Error fetching history:", error);
+      }
+    }
+  </script>
+</body>
+</html>
